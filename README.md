@@ -21,6 +21,6 @@ Office roles that require MFA set up TOTP at first sign-in. Field users sign in 
 
 ## Checks (§19.4)
 ```bash
-pnpm ci          # static route-permission check + typecheck + 111 tests against a real Postgres
+pnpm run check   # static route-permission check + typecheck + 111 tests against a real Postgres
 ```
 `scripts/smoke-http.ts` drives the whole order-to-delivery flow over HTTP against a running server.

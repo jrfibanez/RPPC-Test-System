@@ -14,7 +14,7 @@
     "dev": "pnpm --filter @rppc/web dev",
     "build": "pnpm --filter @rppc/web build",
     "start": "pnpm --filter @rppc/web start",
-    "ci": "pnpm check:routes && pnpm typecheck && pnpm test",
+    "check": "pnpm check:routes && pnpm typecheck && pnpm test",
     "worker": "tsx scripts/worker.ts",
     "job": "tsx scripts/worker.ts"
   },

@@ -16,5 +16,5 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --prod --audit-level high
-      - run: pnpm ci                                  # route check + typecheck + 111 tests (§19.4)
+      - run: pnpm run check                                # route check + typecheck + 111 tests (§19.4)
       - run: pnpm build
