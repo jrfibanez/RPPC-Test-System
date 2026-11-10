@@ -37,15 +37,24 @@ export async function drHtml(d: DrDoc): Promise<string> {
   </body></html>`;
 }
 
-/** Render HTML to PDF with the pre-installed Chromium (Playwright). */
+/**
+ * Render HTML to PDF with headless Chromium. On Vercel (or when PDF_CHROMIUM=sparticuz) it uses @sparticuz/chromium,
+ * a Chromium build made for serverless functions, driven by playwright-core; elsewhere the Playwright install
+ * (PLAYWRIGHT_MODULE lets a host point at a system-wide one, e.g. /opt/node-tools/node_modules/playwright).
+ */
+type Browser = { newPage(o: object): Promise<{ setContent(h: string, o: object): Promise<void>; pdf(o: object): Promise<Uint8Array> }>; close(): Promise<void> };
 export async function htmlToPdf(html: string): Promise<Buffer> {
-  // PLAYWRIGHT_MODULE lets a host point at a system-wide Playwright install (e.g. /opt/node-tools/node_modules/playwright).
   const { createRequire } = await import(/* webpackIgnore: true */ 'node:module');
   const req = createRequire(import.meta.url);
-  const { chromium } = req(process.env.PLAYWRIGHT_MODULE ?? 'playwright') as {
-    chromium: { launch(o: object): Promise<{ newPage(o: object): Promise<{ setContent(h: string, o: object): Promise<void>; pdf(o: object): Promise<Uint8Array> }>; close(): Promise<void> }> };
-  };
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
+  let browser: Browser;
+  if (process.env.VERCEL || process.env.PDF_CHROMIUM === 'sparticuz') {
+    const chromium = req('@sparticuz/chromium') as { args: string[]; executablePath(): Promise<string> };
+    const { chromium: pw } = req('playwright-core') as { chromium: { launch(o: object): Promise<Browser> } };
+    browser = await pw.launch({ args: chromium.args, executablePath: await chromium.executablePath(), headless: true });
+  } else {
+    const { chromium } = req(process.env.PLAYWRIGHT_MODULE ?? 'playwright') as { chromium: { launch(o: object): Promise<Browser> } };
+    browser = await chromium.launch({ args: ['--no-sandbox'] });
+  }
   try {
     const page = await browser.newPage({ javaScriptEnabled: false });
     await page.setContent(html, { waitUntil: 'load' });

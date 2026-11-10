@@ -10,6 +10,6 @@ export const PUT = publicRoute('presigned upload (signature in the URL is the ca
   return withTx(getPool(), (tx) => files.storeUpload(tx, req.nextUrl.searchParams, buf, reqCtx(req)));
 });
 export const GET = publicRoute('presigned download (signature in the URL is the capability)', async (req: NextRequest) => {
-  const { body } = await files.readBlob(req.nextUrl.searchParams);
+  const { body } = await withTx(getPool(), (tx) => files.readBlob(tx, req.nextUrl.searchParams));
   return new NextResponse(new Uint8Array(body), { headers: { 'content-type': 'application/octet-stream', 'cache-control': 'private, no-store', 'content-disposition': 'attachment' } });
 });

@@ -27,6 +27,8 @@ function secret(): Buffer {
   return Buffer.from(crypto.hkdfSync('sha256', Buffer.from(k, 'base64'), Buffer.alloc(0), Buffer.from('rppc-file-urls'), 32));
 }
 const storageDir = () => path.resolve(process.env.STORAGE_DIR ?? './storage');
+/** STORAGE_DRIVER=db keeps file bytes in the file_blobs table (hosts without a writable disk, e.g. Vercel). */
+const useDb = () => process.env.STORAGE_DRIVER === 'db';
 
 /** A signed, expiring capability for one storage key and one method. */
 export function signUrl(method: 'PUT' | 'GET', key: string, ttlSec = 300, extra = ''): string {
@@ -62,13 +64,17 @@ export async function storeUpload(tx: Tx, q: URLSearchParams, body: Buffer, ctx:
   if (!LIMITS[purpose as Purpose]) throw new AppError('bad purpose', 422);
   const exists = await maybe(tx, 'SELECT 1 FROM files WHERE storage_key=$1', [key]);
   if (exists) throw new AppError('already uploaded', 409);
-  const dest = path.join(storageDir(), key);
-  await fs.mkdir(path.dirname(dest), { recursive: true });
-  await fs.writeFile(dest, body, { flag: 'wx' });
   const scan = await scanBuffer(body);
   const row = await one<{ id: string }>(tx, `INSERT INTO files (storage_key, original_name, mime, size_bytes, sha256, scan_status, uploaded_by)
                                               VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`, [key, null, mime, body.length, Buffer.from(sha, 'hex'), scan, userId]);
-  if (scan === 'infected') await fs.rm(dest, { force: true });
+  if (scan !== 'infected') {
+    if (useDb()) await tx.query('INSERT INTO file_blobs (storage_key, data) VALUES ($1,$2)', [key, body]);
+    else {
+      const dest = path.join(storageDir(), key);
+      await fs.mkdir(path.dirname(dest), { recursive: true });
+      await fs.writeFile(dest, body, { flag: 'wx' });
+    }
+  }
   await audit(tx, { id: userId, roles: [] }, 'file.upload', 'file', row.id, null, { purpose, mime, size: body.length, scan }, ctx);
   return { fileId: row.id, scanStatus: scan };
 }
@@ -101,7 +107,12 @@ export async function downloadUrl(tx: Tx, fileId: string): Promise<string> {
   if (f.scan_status !== 'clean') throw new Forbidden('file is not cleared by the virus scan');
   return signUrl('GET', f.storage_key, 300);
 }
-export async function readBlob(q: URLSearchParams): Promise<{ body: Buffer; key: string }> {
+export async function readBlob(tx: Tx, q: URLSearchParams): Promise<{ body: Buffer; key: string }> {
   const key = verifySignedUrl(q, 'GET');
+  if (useDb()) {
+    const r = await maybe<{ data: Buffer }>(tx, 'SELECT data FROM file_blobs WHERE storage_key=$1', [key]);
+    if (!r) throw new NotFound();
+    return { body: r.data, key };
+  }
   return { body: await fs.readFile(path.join(storageDir(), key)), key };
 }

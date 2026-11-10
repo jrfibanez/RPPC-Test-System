@@ -11,3 +11,4 @@ export * as billing from './domain/billing';
 export * as payroll from './domain/payroll';
 export * as files from './domain/files';
 export * as sync from './domain/sync';
+export * as jobs from './jobs';

@@ -25,3 +25,14 @@ Built from docs/SPEC.md v0.5. Migrations 0001–0011 are the spec SQL (§7.1–7
 
 ### Not done yet
 Proposal/contract PDF templates and email sending; web push + email delivery (notifications are in-app only until VAPID/SMTP are configured); client portal UI; pallet audit, concerns, procurement modules; dashboards beyond the operations basics; HIBP breach-list integration (small offline list for now).
+
+## 0.1.1 — 2026-11-10 — Hosting on Vercel + Supabase
+
+- Migration 0015: removes the Supabase Data API roles' (anon, authenticated) access to every table, now and for future
+  tables; row-level security on every table with an explicit app_user policy; app_user search_path/timezone for a
+  transaction pooler; `file_blobs` table.
+- `STORAGE_DRIVER=db` keeps uploaded files in Postgres (Vercel has no writable disk).
+- PDFs on Vercel use @sparticuz/chromium; if Chromium cannot start, the DR / gate pass is served as a printable page.
+- Jobs moved to `packages/db/src/jobs.ts`; Vercel Cron calls `/api/v1/cron/daily` (06:00 PHT) with `CRON_SECRET`.
+  Vercel Hobby allows only daily crons, so approval reminders run once a day there (every 30 min with the worker).
+- `scripts/export-seed-sql.ts` turns a seeded database into INSERTs for a host where triggers cannot be disabled.
