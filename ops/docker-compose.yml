@@ -1,0 +1,15 @@
+# Local PostgreSQL 16 (§9). Usage: docker compose -f ops/docker-compose.yml up -d
+services:
+  db:
+    image: postgres:16.6-bookworm
+    environment:
+      POSTGRES_USER: rppc
+      POSTGRES_PASSWORD: rppc_dev
+      POSTGRES_DB: rppc
+    ports: ["5432:5432"]
+    volumes: ["rppc-pg:/var/lib/postgresql/data"]
+  clamav:              # antivirus for uploads (§8.5); set CLAMD_HOST=localhost to use it
+    image: clamav/clamav:1.4
+    ports: ["3310:3310"]
+volumes:
+  rppc-pg: {}

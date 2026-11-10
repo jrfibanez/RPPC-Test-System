@@ -1,0 +1,32 @@
+{
+  "name": "rppc",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "db:setup": "tsx scripts/db-setup.ts",
+    "db:migrate": "pnpm --filter @rppc/db migrate",
+    "db:seed-demo": "tsx scripts/seed-demo.ts",
+    "gen:rbac": "pnpm --filter @rppc/core gen:rbac",
+    "check:routes": "tsx scripts/check-routes.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "dev": "pnpm --filter @rppc/web dev",
+    "build": "pnpm --filter @rppc/web build",
+    "start": "pnpm --filter @rppc/web start",
+    "check": "pnpm check:routes && pnpm typecheck && pnpm test",
+    "worker": "tsx scripts/worker.ts",
+    "job": "tsx scripts/worker.ts"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "@types/pg": "8.15.4",
+    "pg": "8.16.3",
+    "tsx": "4.20.3",
+    "typescript": "5.8.3",
+    "vitest": "3.2.4"
+  },
+  "dependencies": {
+    "pg-boss": "10.3.2"
+  }
+}
