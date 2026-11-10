@@ -1,0 +1,29 @@
+{
+  "name": "@rppc/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "2.0.2",
+    "@rppc/core": "workspace:*",
+    "@rppc/db": "workspace:*",
+    "@rppc/pdf": "workspace:*",
+    "next": "15.5.29",
+    "pg": "8.16.3",
+    "qrcode": "1.5.4",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "@types/react": "19.1.10",
+    "@types/react-dom": "19.1.7",
+    "typescript": "5.8.3"
+  }
+}
